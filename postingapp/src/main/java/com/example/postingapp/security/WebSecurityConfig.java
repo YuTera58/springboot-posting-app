@@ -23,7 +23,7 @@ public class WebSecurityConfig {
             .formLogin((form) -> form
                 .loginPage("/login")              // ログインページのURL
                 .loginProcessingUrl("/login")     // ログインフォームの送信先URL
-                .defaultSuccessUrl("/?loggedIn")  // ログイン成功時のリダイレクト先URL
+                .defaultSuccessUrl("/posts?loggedIn")  // ログイン成功時のリダイレクト先URL
                 .failureUrl("/login?error")       // ログイン失敗時のリダイレクト先URL
                 .permitAll()                      // permitAll()メソッドは、ログイン・ログアウト関連のURLが誰にでもアクセス可能であることを表します。
             )
