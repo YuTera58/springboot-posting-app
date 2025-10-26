@@ -1,0 +1,5 @@
+package com.example.postingapp.repository;
+
+public class PostRepository {
+
+}
