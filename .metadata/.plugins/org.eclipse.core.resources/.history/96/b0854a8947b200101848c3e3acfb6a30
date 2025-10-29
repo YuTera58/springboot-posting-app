@@ -1,9 +1,0 @@
-package com.example.postingapp.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.example.postingapp.entity.Post;
-
-public interface PostRepository extends JpaRepository<Post, Integer> {
-
-}
