@@ -1,0 +1,69 @@
+package com.example.postingapp.controller;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+
+/* ポイントは以下の７つ
+//1.テスト時にアプリのコンテキストが起動されるようにする
+ * クラスに@SpringBootTestアノテーションをつけることで、テスト時にアプリのコンテキストを起動してくれます
+//2.MockMvcインスタンスを注入する
+ * @AutoConfigureMockMvc
+//3.テスト用の設定ファイルを指定する
+ * @ActiveProfiles("test")
+ * テスト時に異なる設定ファイルを適用したい場合は、クラスに@ActiveProfilesアノテーションをつける
+ * 引数には、テスト時に適用したい設定ファイル「application-○○○.properties」の「○○○」の部分を指定します
+//4.テストメソッドに@Testアノテーションをつける
+//5.@WithUserDetailsアノテーションでログイン済みユーザーとして振る舞う
+ * テストメソッドに@WithUserDetailsアノテーションをつけ、
+ * 引数にはログイン時に利用するユーザー名（本アプリではメールアドレス）を指定することで、
+ * 「そのユーザーとしてログインする」という振る舞いを実現できます
+//6.perform()メソッドでHTTPリクエストを送信する
+ * テストメソッド内でMockMvcクラスのperform()メソッドを使うことで、HTTPリクエストを送信する振る舞いを実現できます
+ * 引数にはHTTPリクエストメソッドと送信先のルートパスを指定します
+//7.andExpect()メソッドでHTTPレスポンスの内容を検証する
+ * テストメソッド内でMockMvcクラスのandExpect()メソッドを使うことで、HTTPレスポンスが期待する内容かどうかを検証できます
+ * 引数には「期待する内容」を指定します
+ * status().isOk() => HTTPステータスコードが200 OKである（HTTPステータスコード＝HTTPレスポンスに付与される3桁の数値のこと）
+ * view().name("posts/index") => 表示されたビューが"posts/index"である
+ * status().is3xxRedirection() => HTTPステータスコードが3で始まるリダイレクションである
+ *                              （補足：リダイレクト時は3で始まるHTTPステータスコードが付与される）
+ * redirectedUrl("http://localhost/login") => リダイレクト先のURLが"http://localhost/login"（ログインページ）である
+ * 
+//andExpect()メソッドに指定した「期待する内容」をすべて満たしていれば、そのテストメソッドは成功となります。
+ *なお、andExpect()メソッドは前述のperform()メソッドにつなげて使います。
+ *こうすることで、perform()メソッドで送信したHTTPリクエストに対するHTTPレスポンスの内容を検証できます。
+//
+//※Javaではメソッド名に日本語が使えます
+**/
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+public class PostControllerTest {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    public void ログイン済みの場合は投稿一覧ページが正しく表示される() throws Exception {
+        mockMvc.perform(get("/posts"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("posts/index"));
+    }
+
+    @Test
+    public void 未ログインの場合は投稿一覧ページからログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+    }
+}
