@@ -27,6 +27,19 @@
            <div th:if="${param.loggedIn}">
                <p>ログインしました。</p>
            </div>
+           
+           <!-- フラッシュメッセージ -->
+           <div th:if="${successMessage}">
+               <p th:text="${successMessage}"></p>
+           </div> 
+            
+           <!-- フラッシュメッセージ -->
+           <div th:if="${errorMessage}">
+               <p th:text="${errorMessage}"></p>
+           </div>   
+           
+           <a th:href="@{/posts/register}">投稿作成</a>  
+           
            <!-- #listsはリスト型のデータを扱うためのユーティリティオブジェクトで、
                 isEmpty()メソッドにList型のデータを指定することでその中身が空かどうかをチェックすることができます。
                 空であればtrue、空でなければfalseを返します。-->
@@ -38,6 +51,13 @@
                <article th:each="post : ${posts}">
                    <h2 th:text="${post.title}"></h2>
                    <p th:text="${post.content}"></p>
+                   
+                   <!-- th属性のパス内に変数を埋め込む
+					投稿詳細ページのパスは投稿によって異なるため、パス内に変数（投稿のid）を埋め込む必要があります。
+					パス内に変数を埋め込むにはどうするかというと、Thymeleafでは__${変数}__のように前後をアンダースコア2つで囲みます。
+					つまり以下のように記述すれば、パス内に投稿のidを埋め込むことができます。
+                   -->
+                   <a th:href="@{/posts/__${post.id}__}">詳細</a>
                </article>
            </div>
            <!-- th:if属性を設定したHTML要素は指定された条件を満たすときのみ表示される -->

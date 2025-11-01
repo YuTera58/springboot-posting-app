@@ -1,0 +1,76 @@
+package com.example.postingapp.controller;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.example.postingapp.entity.Post;
+import com.example.postingapp.entity.User;
+import com.example.postingapp.security.UserDetailsImpl;
+import com.example.postingapp.service.PostService;
+
+/* クラスに@RequestMappingアノテーションをつけることで、ルートパスの基準値を設定できる。
+　　例：@RequestMapping("/posts")と指定すれば、そのコントローラ内の各メソッドが担当するURLは、
+　　「https://ドメイン名/posts/○○○」になる。
+*/
+@Controller
+@RequestMapping("/posts")
+public class PostController {
+    private final PostService postService;
+
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+    
+	/* コントローラのメソッドでは、Spring Securityが提供する@AuthenticationPrincipalアノテーションを引数につけることで、
+	   現在ログイン中のユーザー情報を取得できる。
+	*/ 
+    @GetMapping
+    public String index(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, Model model) {
+        User user = userDetailsImpl.getUser();
+        List<Post> posts = postService.findPostsByUserOrderedByCreatedAtDesc(user);
+
+        model.addAttribute("posts", posts);
+
+        return "posts/index";
+    }
+    
+	/*
+	■ポイントは以下の3つです。
+	1.引数に@PathVariableアノテーションをつける
+	　コントローラ内ではメソッドの引数に@PathVariableアノテーションをつけることで、
+	　URLの一部をその引数にバインドする（割り当てる）ことができます。
+	　これにより、URLの一部を変数のように扱って、コントローラ内でその値を利用することができます。
+	　※例えば、以下のようなURLにアクセスしたとします。
+	　--------------------------------
+	　https://ドメイン名/posts/3
+	　--------------------------------
+	　URLの{id}の部分にある値（3）がshow()メソッドの引数idにバインドされます。
+	　これにより、show()メソッド内ではidの値を利用して処理を行うことができます。
+　　　なお、@PathVariableアノテーションのname属性にはバインドさせたいURLの{}内の文字列（今回は/posts/{id}なので、"id"）を指定します。
+	2.投稿が存在しない場合の処理を書く
+	3.Optional<Post>型をPost型に変換する
+	**/
+    @GetMapping("/{id}")
+    public String show(@PathVariable(name = "id") Integer id, RedirectAttributes redirectAttributes, Model model) {
+        Optional<Post> optionalPost  = postService.findPostById(id);
+
+        if (optionalPost.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "投稿が存在しません。");
+
+            return "redirect:/posts";
+        }
+
+        Post post = optionalPost.get();
+        model.addAttribute("post", post);
+
+        return "posts/show";
+    }
+}
