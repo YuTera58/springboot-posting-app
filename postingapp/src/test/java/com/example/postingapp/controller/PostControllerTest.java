@@ -53,8 +53,8 @@ import com.example.postingapp.service.PostService;
 **/
 
 //以下2つの振る舞いを検証するテストメソッドを定義しました。
-//1.ログイン済み（かつメール認証済み）の場合は投稿一覧ページが正しく表示される
-//2.未ログインの場合は投稿一覧ページからログインページにリダイレクトする
+//1.ログイン済み（かつメール認証済み）の場合
+//2.未ログインの場合
 
 @SpringBootTest
 @AutoConfigureMockMvc
