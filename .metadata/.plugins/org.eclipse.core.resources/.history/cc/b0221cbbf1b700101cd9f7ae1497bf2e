@@ -1,0 +1,263 @@
+package com.example.postingapp.controller;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.postingapp.entity.Post;
+import com.example.postingapp.service.PostService;
+
+
+/*
+ ■ポイントは以下の７つ
+　1.テスト時にアプリのコンテキストが起動されるようにする
+　　クラスに@SpringBootTestアノテーションをつけることで、テスト時にアプリのコンテキストを起動してくれます
+　2.MockMvcインスタンスを注入する
+　　@AutoConfigureMockMvc
+　3.テスト用の設定ファイルを指定する
+　　@ActiveProfiles("test")
+　　テスト時に異なる設定ファイルを適用したい場合は、クラスに@ActiveProfilesアノテーションをつける
+　　引数には、テスト時に適用したい設定ファイル「application-○○○.properties」の「○○○」の部分を指定します
+　4.テストメソッドに@Testアノテーションをつける
+　5.@WithUserDetailsアノテーションでログイン済みユーザーとして振る舞う
+　　テストメソッドに@WithUserDetailsアノテーションをつけ、
+　　引数にはログイン時に利用するユーザー名（本アプリではメールアドレス）を指定することで、
+　　「そのユーザーとしてログインする」という振る舞いを実現できます
+　6.perform()メソッドでHTTPリクエストを送信する
+　　テストメソッド内でMockMvcクラスのperform()メソッドを使うことで、HTTPリクエストを送信する振る舞いを実現できます
+　　引数にはHTTPリクエストメソッドと送信先のルートパスを指定します
+　7.andExpect()メソッドでHTTPレスポンスの内容を検証する
+　　テストメソッド内でMockMvcクラスのandExpect()メソッドを使うことで、HTTPレスポンスが期待する内容かどうかを検証できます
+　　引数には「期待する内容」を指定します
+　　status().isOk() => HTTPステータスコードが200 OKである（HTTPステータスコード＝HTTPレスポンスに付与される3桁の数値のこと）
+　　view().name("posts/index") => 表示されたビューが"posts/index"である
+　　status().is3xxRedirection() => HTTPステータスコードが3で始まるリダイレクションである
+　　                              （補足：リダイレクト時は3で始まるHTTPステータスコードが付与される）
+　　redirectedUrl("http://localhost/login") => リダイレクト先のURLが"http://localhost/login"（ログインページ）である
+　　
+　　andExpect()メソッドに指定した「期待する内容」をすべて満たしていれば、そのテストメソッドは成功となります。
+　　なお、andExpect()メソッドは前述のperform()メソッドにつなげて使います。
+　　こうすることで、perform()メソッドで送信したHTTPリクエストに対するHTTPレスポンスの内容を検証できます。
+
+　※Javaではメソッド名に日本語が使えます
+**/
+
+//以下2つの振る舞いを検証するテストメソッドを定義しました。
+//1.ログイン済み（かつメール認証済み）の場合
+//2.未ログインの場合
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+public class PostControllerTest {
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Autowired
+    private PostService postService; 
+
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    public void ログイン済みの場合は投稿一覧ページが正しく表示される() throws Exception {
+        mockMvc.perform(get("/posts"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("posts/index"));
+    }
+
+    @Test
+    public void 未ログインの場合は投稿一覧ページからログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+    }
+    
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    public void ログイン済みの場合は投稿詳細ページが正しく表示される() throws Exception {
+        mockMvc.perform(get("/posts/1"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("posts/show"));
+    }
+
+    @Test
+    public void 未ログインの場合は投稿詳細ページからログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts/1"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+    }
+    
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    public void ログイン済みの場合は投稿作成ページが正しく表示される() throws Exception {
+        mockMvc.perform(get("/posts/register"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("posts/register"));
+    }
+
+    @Test
+    public void 未ログインの場合は投稿作成ページからログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts/register"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+    }
+    
+    /* ポイントは以下の4つ
+    1.@Transactionalアノテーションでデータベースの変更をロールバックする
+    　テストメソッドに@Transactionalアノテーションを付与すると、
+    　テストメソッドの実行後にデータベースの変更をロールバック、つまりテストメソッド実行前の状態に戻してくれます。
+    　※サービスクラスなど他のクラスに@Transactionalアノテーションを付与する場合と挙動が異なります。
+    2.with()メソッドでCSRFトークンを含める
+    　Spring Securityを利用している場合、CSRF保護がデフォルトで有効になっているため、
+    　POSTメソッドなどWebサーバーの状態を変更するHTTPリクエストにはCSRFトークンを含める必要があります（CSRFについては後述）。
+    　これはテストの実行時にも必要です。
+    　POSTメソッドなどWebサーバーの状態を変更するHTTPリクエストにCSRFトークンが含まれていない場合、エラーが発生します。
+　　　MockMvcクラスのperform()メソッドにwith()メソッドをつなげ、引数にcsrf()メソッドを指定することで、
+　　　HTTPリクエストにCSRFトークンを含めることができます。
+    3.param()メソッドでリクエストパラメータを含める
+    　MockMvcクラスのperform()メソッドにparam()メソッドをつなげることで、HTTPリクエストにリクエストパラメータを含めることができます。
+    　つまり、フォームを送信したときと同じ振る舞いを実現できるということです。
+    　リクエストパラメータ ＝ URLの末尾に?パラメータ名=値の形式で付与されるデータや、フォームから送信されるデータなど、HTTPリクエストに含まれるデータのこと。
+    　第1引数にはパラメータ名（フォームのname属性の値）、第2引数には値（フォームの入力値）を指定します。
+    　param()メソッドをつなげることで、複数のリクエストパラメータを含めることができます。（*1）
+    4.アサーションを使ってデータベースの状態を検証する
+    　アサーション（assertion） は日本語で「表明」や「断言」といった意味を持ちますが、
+    　プログラミングの世界では、プログラムの実際の結果が期待する結果と一致するかどうかを検証する仕組みのことを表します。
+　　　「結果はこうあるべきだ！」と表明しておき、実際の結果がそうでなかったら失敗扱いにしたり、例外を発生させたりするイメージです。
+　　　JUnitでは、アサーション用のメソッドであるassertThat()メソッドを使うことで、以下のように実際の結果が期待する結果と一致するかどうかを検証できます。
+　　　・assertThat(A).isEqualTo(B);     => AがBと一致する（一致しなければテスト失敗）
+　　　・assertThat(A).isNotEqualTo(B);  => AがBと一致しない（一致すればテスト失敗）
+　　　なお、assertThat()メソッドにつなげて使うisEqualTo()メソッドやisNotEqualTo()メソッドは、
+　　　マッチャー（Matcher） といって、対象が特定の条件を満たしているかどうかを検証するためのものです。
+　　　「期待する結果が何か」を具体的に表現するためのもの、と言い換えることもできます。
+　　　他にもさまざまなマッチャー（Matcher）が存在しますが、現時点ではよく使われるisEqualTo()メソッドとisNotEqualTo()メソッドの2つを覚えておけばOKです。
+　　　以下の実装コード（*2）は、idが最も大きいエンティティの各フィールドの値と、フォームの送信内容を比較しています。
+　　　こうすることで、データベースにデータを追加できている、またはできていないことを検証できます。
+    **/
+    /* 補足：CSRFとは
+    CSRFとはCross-Site Request Forgeries（クロス・サイト・リクエスト・フォージェリ）の略で、
+    偽のWebサイトなどを使い、本人になりすましてHTTPリクエストを送信する攻撃手法のことです。
+    一般的には「シーサーフ」と読みます。
+    CSRFによるサイバー攻撃の具体例は以下のとおりです。
+    ・ユーザーがインターネットバンキングにログインした状態である
+    ・ユーザーがメールに記載されているリンクをクリックし、攻撃者が作った偽のニュースサイトにアクセスする
+    ・偽のニュースサイトにおいて、ログイン状態のインターネットバンキングに対して本人になりすましてHTTPリクエストを送信する
+    ・インターネットバンキング側は上記のHTTPリクエストを本人の操作として受け取ってしまい、攻撃者に大金が送られてしまう
+    このように、偽のWebサイトなどを使い、本人になりすましてHTTPリクエストを送信するのがCSRFの攻撃手法です。
+    **/
+    /* 補足：redirectedUrl()メソッドの引数について
+　　　redirectedUrl()メソッドの引数ですが、リダイレクト先によって指定方法が異なっています。
+　　　ログインページは絶対パスで指定しているのに対し、投稿一覧ページは相対パスで指定しています。
+　　　redirectedUrl()メソッドの引数を絶対パスと相対パスのどちらで指定するかは、「アプリの内部でどのようにリダイレクトを実装しているか」に依存します。
+　　　PostControllerクラスのcreate()メソッドでは、以下のように相対パスで投稿一覧ページにリダイレクトさせています。
+　　　・return "redirect:/posts";
+　　　よって、redirectedUrl()メソッドの引数も相対パスで指定する必要があります。
+　　　一方で、認可によってログインページにリダイレクトさせる処理は、Spring Securityによって絶対パスで実装されています。
+　　　よって、認可によってログインページにリダイレクトしたことを検証する場合、redirectedUrl()メソッドの引数も絶対パスで指定する必要があります。
+    **/
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    @Transactional
+    public void ログイン済みの場合は投稿作成後に投稿一覧ページにリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/create").with(csrf()).param("title", "テストタイトル").param("content", "テスト内容")) //*1
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/posts"));
+
+        //*2
+        Post post = postService.findFirstPostByOrderByIdDesc();
+        assertThat(post.getTitle()).isEqualTo("テストタイトル");
+        assertThat(post.getContent()).isEqualTo("テスト内容");
+    }
+
+    @Test
+    @Transactional
+    public void 未ログインの場合は投稿を作成せずにログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/create").with(csrf()).param("title", "テストタイトル").param("content", "テスト内容"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+
+        //*2
+        Post post = postService.findFirstPostByOrderByIdDesc();
+        assertThat(post.getTitle()).isNotEqualTo("テストタイトル");
+        assertThat(post.getContent()).isNotEqualTo("テスト内容");
+    }
+    
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    public void ログイン済みの場合は自身の投稿編集ページが正しく表示される() throws Exception {
+        mockMvc.perform(get("/posts/1/edit"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("posts/edit"));
+    }
+
+    @Test
+    @WithUserDetails("jiro.samurai@example.com")
+    public void ログイン済みの場合は他人の投稿編集ページから投稿一覧ページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts/1/edit"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/posts"));
+    }
+
+    @Test
+    public void 未ログインの場合は投稿編集ページからログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(get("/posts/1/edit"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+    }
+    
+    //ワンポイント：isPresent()メソッドでOptional<T>型の存在チェックを行う
+    @Test
+    @WithUserDetails("taro.samurai@example.com")
+    @Transactional
+    public void ログイン済みの場合は自身の投稿更新後に投稿詳細ページにリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/1/update").with(csrf()).param("title", "テストタイトル").param("content", "テスト内容"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/posts/1"));
+
+        Optional<Post> optionalPost = postService.findPostById(1);
+        assertThat(optionalPost).isPresent();
+        Post post = optionalPost.get();
+        assertThat(post.getTitle()).isEqualTo("テストタイトル");
+        assertThat(post.getContent()).isEqualTo("テスト内容");
+    }
+
+    @Test
+    @WithUserDetails("jiro.samurai@example.com")
+    @Transactional
+    public void ログイン済みの場合は他人の投稿を更新せずに投稿一覧ページにリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/1/update").with(csrf()).param("title", "テストタイトル").param("content", "テスト内容"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/posts"));
+
+        Optional<Post> optionalPost = postService.findPostById(1);
+        assertThat(optionalPost).isPresent();
+        Post post = optionalPost.get();
+        assertThat(post.getTitle()).isNotEqualTo("テストタイトル");
+        assertThat(post.getContent()).isNotEqualTo("テスト内容");
+    }
+
+    @Test
+    @Transactional
+    public void 未ログインの場合は投稿を更新せずにログインページにリダイレクトする() throws Exception {
+        mockMvc.perform(post("/posts/1/update").with(csrf()).param("title", "テストタイトル").param("content", "テスト内容"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("http://localhost/login"));
+
+        Optional<Post> optionalPost = postService.findPostById(1);
+        assertThat(optionalPost).isPresent();
+        Post post = optionalPost.get();
+        assertThat(post.getTitle()).isNotEqualTo("テストタイトル");
+        assertThat(post.getContent()).isNotEqualTo("テスト内容");
+    }
+}

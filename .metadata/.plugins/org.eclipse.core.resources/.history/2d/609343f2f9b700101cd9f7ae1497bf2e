@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       <title>投稿一覧</title>
+   </head>
+   <body>
+       <header>
+           <nav>
+               <a th:href="@{/}">投稿アプリ</a>
+
+               <ul>
+                   <li>
+                       <a th:href="@{/logout}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                           ログアウト
+                       </a>
+                       <form id="logout-form" th:action="@{/logout}" method="post"></form>
+                   </li>
+               </ul>
+           </nav>
+       </header>
+
+       <main>
+           <h1>投稿一覧</h1>
+           
+           <div th:if="${param.loggedIn}">
+               <p>ログインしました。</p>
+           </div>
+           
+           <!-- フラッシュメッセージ -->
+           <div th:if="${successMessage}">
+               <p th:text="${successMessage}"></p>
+           </div> 
+            
+           <!-- フラッシュメッセージ -->
+           <div th:if="${errorMessage}">
+               <p th:text="${errorMessage}"></p>
+           </div>   
+           
+           <a th:href="@{/posts/register}">投稿作成</a>  
+           
+           <!-- #listsはリスト型のデータを扱うためのユーティリティオブジェクトで、
+                isEmpty()メソッドにList型のデータを指定することでその中身が空かどうかをチェックすることができます。
+                空であればtrue、空でなければfalseを返します。-->
+           <!-- th:unless属性を設定したHTML要素は指定された条件を満たさないときのみ表示される -->
+           <div th:unless="${#lists.isEmpty(posts)}">
+			   <!-- Thymeleafのth:each属性は、繰り返し処理を行うための機能です。
+			        th:each属性の値にListなどのコレクションや配列を指定することで、
+			        その要素の数だけ繰り返し処理を行い、HTML要素を出力することができます。-->
+               <article th:each="post : ${posts}">
+                   <h2 th:text="${post.title}"></h2>
+                   <p th:text="${post.content}"></p>
+                   
+                   <!-- th属性のパス内に変数を埋め込む
+					投稿詳細ページのパスは投稿によって異なるため、パス内に変数（投稿のid）を埋め込む必要があります。
+					パス内に変数を埋め込むにはどうするかというと、Thymeleafでは__${変数}__のように前後をアンダースコア2つで囲みます。
+					つまり以下のように記述すれば、パス内に投稿のidを埋め込むことができます。
+                   -->
+                   <a th:href="@{/posts/__${post.id}__}">詳細</a>
+                   <a th:href="@{/posts/__${post.id}__/edit}">編集</a>
+                   
+                   <!-- onsubmit属性で確認ダイアログを表示させる
+                   form要素にonsubmit属性を設定し、JavaScriptのconfirm()メソッドを使って確認ダイアログを表示させています。
+                   onsubmit属性 ＝ フォーム送信時のイベント処理を設定するための属性
+                   このように確認ダイアログを表示させることで、誤って削除ボタンを押してしまうといった意図せぬ操作を防げるため、ユーザビリティの向上につながります。
+                   特にデータの削除のような後戻りできない操作の場合は必須級です。
+                   -->
+                   <form th:action="@{/posts/__${post.id}__/delete}" method="post" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+                       <button type="submit">削除</button>
+                   </form>  
+               </article>
+           </div>
+           <!-- th:if属性を設定したHTML要素は指定された条件を満たすときのみ表示される -->
+           <div th:if="${#lists.isEmpty(posts)}">
+               <p>投稿はありません。</p>
+           </div>
+       </main>
+
+       <footer>
+           <p>&copy; 投稿アプリ All rights reserved.</p>
+       </footer>
+   </body>
+</html>

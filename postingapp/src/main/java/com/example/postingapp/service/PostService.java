@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.postingapp.entity.Post;
 import com.example.postingapp.entity.User;
+import com.example.postingapp.form.PostEditForm;
 import com.example.postingapp.form.PostRegisterForm;
 import com.example.postingapp.repository.PostRepository;
 
@@ -46,5 +47,21 @@ public class PostService {
         post.setUser(user);
 
         postRepository.save(post);
+    }
+    
+    //updatePost()メソッドではエンティティをインスタンス化するのではなく、第2引数で更新対象のエンティティを受け取ります。
+    @Transactional
+    public void updatePost(PostEditForm postEditForm, Post post) {
+        post.setTitle(postEditForm.getTitle());
+        post.setContent(postEditForm.getContent());
+
+        postRepository.save(post);
+    }
+    
+    //引数でエンティティを受け取り、リポジトリのdelete()メソッドで削除する
+    //リポジトリのdelete()メソッドはsave()メソッドなどと同様に、JpaRepositoryインターフェースを継承した時点で使えるため、自分で定義する必要はありません。
+    @Transactional
+    public void deletePost(Post post) {
+        postRepository.delete(post);
     }
 }

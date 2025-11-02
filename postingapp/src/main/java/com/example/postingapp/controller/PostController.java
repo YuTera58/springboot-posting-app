@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.postingapp.entity.Post;
 import com.example.postingapp.entity.User;
+import com.example.postingapp.form.PostEditForm;
 import com.example.postingapp.form.PostRegisterForm;
 import com.example.postingapp.security.UserDetailsImpl;
 import com.example.postingapp.service.PostService;
@@ -107,6 +108,94 @@ public class PostController {
         
         //「投稿が完了しました。」というフラッシュメッセージとともに、投稿一覧ページにリダイレクトさせます。
         redirectAttributes.addFlashAttribute("successMessage", "投稿が完了しました。");
+
+        return "redirect:/posts";
+    }
+    
+    /*
+    ■ポイントは以下の2つです。
+    1.他人の投稿編集ページにアクセスできないようにする (*1)
+    2.フォームの初期値をビューに渡す (*2)
+    **/
+    @GetMapping("/{id}/edit")
+    public String edit(@PathVariable(name = "id") Integer id,
+                       @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                       RedirectAttributes redirectAttributes,
+                       Model model)
+    {
+        Optional<Post> optionalPost = postService.findPostById(id);
+        User user = userDetailsImpl.getUser();
+
+        //*1
+        //条件式の先頭に論理否定演算子（!）をつけて反転させているため、
+        //投稿を作成したユーザーがログイン中のユーザーと等しくない場合にtrueを返します。
+        if (optionalPost.isEmpty() || !optionalPost.get().getUser().equals(user)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "不正なアクセスです。");
+
+            return "redirect:/posts";
+        }
+
+        //*2
+        //更新前の投稿の各フィールドの値を使ってフォームクラスをインスタンス化し、ビューに渡します。
+        Post post = optionalPost.get();
+        model.addAttribute("post", post);
+        model.addAttribute("postEditForm", new PostEditForm(post.getTitle(), post.getContent()));
+
+        return "posts/edit";
+    }
+    
+    //URLのidに一致する投稿が存在しない場合だけでなく、その投稿を作成したユーザーが、
+    //ログイン中のユーザーと一致しない場合にも投稿一覧ページにリダイレクトさせています。（他人の投稿を更新できないようにするため）
+    @PostMapping("/{id}/update")
+    public String update(@ModelAttribute @Validated PostEditForm postEditForm,
+                         BindingResult bindingResult,
+                         @PathVariable(name = "id") Integer id,
+                         @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                         RedirectAttributes redirectAttributes,
+                         Model model)
+    {
+        Optional<Post> optionalPost = postService.findPostById(id);
+        User user = userDetailsImpl.getUser();
+
+        if (optionalPost.isEmpty() || !optionalPost.get().getUser().equals(user)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "不正なアクセスです。");
+
+            return "redirect:/posts";
+        }
+
+        Post post = optionalPost.get();
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("post", post);
+            model.addAttribute("postEditForm", postEditForm);
+
+            return "posts/edit";
+        }
+
+        postService.updatePost(postEditForm, post);
+        redirectAttributes.addFlashAttribute("successMessage", "投稿を編集しました。");
+
+        return "redirect:/posts/" + id;
+    }
+    
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable(name = "id") Integer id,
+                         @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                         RedirectAttributes redirectAttributes,
+                         Model model)
+    {
+        Optional<Post> optionalPost = postService.findPostById(id);
+        User user = userDetailsImpl.getUser();
+
+        if (optionalPost.isEmpty() || !optionalPost.get().getUser().equals(user)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "不正なアクセスです。");
+
+            return "redirect:/posts";
+        }
+
+        Post post = optionalPost.get();
+        postService.deletePost(post);
+        redirectAttributes.addFlashAttribute("successMessage", "投稿を削除しました。");
 
         return "redirect:/posts";
     }

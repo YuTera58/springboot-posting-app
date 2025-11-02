@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       <title>投稿詳細</title>
+   </head>
+   <body>
+       <header>
+           <nav>
+               <a th:href="@{/}">投稿アプリ</a>
+
+               <ul>
+                   <li>
+                       <a th:href="@{/logout}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                           ログアウト
+                       </a>
+                       <form id="logout-form" th:action="@{/logout}" method="post"></form>
+                   </li>
+               </ul>
+           </nav>
+       </header>
+
+       <main>
+           <h1>投稿詳細</h1>
+
+           <a th:href="@{/posts}">&lt; 戻る</a>
+
+           <article>
+               <h2 th:text="${post.title}"></h2>
+               <p th:text="${post.content}"></p>
+               
+               <!--
+				本アプリでは他人の投稿詳細ページにもアクセスできるので、その場合には投稿編集ページのリンクが表示されないようにしたいです。
+				そこで以下のようにth:if属性を使い、ログイン中のユーザーのidと、投稿を作成したユーザーのidが等しい場合にのみリンクを表示させています。
+				ユーティリティオブジェクトの#authenticationを使うことで、Thymeleafテンプレート内からログイン中のユーザー情報にアクセスできます。
+			   -->
+               <div th:if="${#authentication.principal.user.id == post.user.id}">
+                   <a th:href="@{/posts/__${post.id}__/edit}">編集</a>
+               </div>   
+           </article>
+       </main>
+
+       <footer>
+           <p>&copy; 投稿アプリ All rights reserved.</p>
+       </footer>
+   </body>
+</html>
