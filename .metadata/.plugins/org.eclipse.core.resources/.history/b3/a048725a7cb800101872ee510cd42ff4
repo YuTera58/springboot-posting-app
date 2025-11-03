@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+       <div th:replace="~{fragment :: meta}"></div>
+       <div th:replace="~{fragment :: styles}"></div>
+       <title>投稿一覧</title>
+   </head>
+   <body>
+	   <div class="wrapper">
+       		<div th:replace="~{fragment :: header}"></div>
+
+	        <main>
+	            <div class="container">
+	                <h1 class="fs-2 my-3">投稿一覧</h1>
+	    
+	                <div th:if="${param.loggedIn}">
+	                    <p class="text-success">ログインしました。</p>
+	                </div>
+					
+					<!-- フラッシュメッセージ -->
+	                <div th:if="${successMessage}">
+	                    <p class="text-success" th:text="${successMessage}"></p>
+	                </div>
+	    
+		            <!-- フラッシュメッセージ -->
+	                <div th:if="${errorMessage}">
+	                    <p class="text-danger" th:text="${errorMessage}"></p>
+	                </div>
+	    
+	                <div class="mb-2">
+	                    <a th:href="@{/posts/register}" class="text-decoration-none">投稿作成</a>
+	                </div>
+	    
+	                <!-- #listsはリスト型のデータを扱うためのユーティリティオブジェクトで、
+	                isEmpty()メソッドにList型のデータを指定することでその中身が空かどうかをチェックすることができます。
+	                空であればtrue、空でなければfalseを返します。-->
+	                <!-- th:unless属性を設定したHTML要素は指定された条件を満たさないときのみ表示される -->
+					<div th:unless="${#lists.isEmpty(posts)}">
+					    <!-- Thymeleafのth:each属性は、繰り返し処理を行うための機能です。
+				        th:each属性の値にListなどのコレクションや配列を指定することで、
+				        その要素の数だけ繰り返し処理を行い、HTML要素を出力することができます。-->
+	                    <article th:each="post : ${posts}">
+	                        <div class="card mb-3">
+	                            <div class="card-body">                        
+	                                <h2 class="card-title fs-5" th:text="${post.title}"></h2>
+	                                <p class="card-text" th:text="${post.content}"></p>
+	                                <!-- 課題用追加項目 -->
+	            					<p class="card-text" th:text="${post.updated_at}"></p>
+	            					
+	                                <div class="d-flex">
+									    <!-- th属性のパス内に変数を埋め込む
+						                 投稿詳細ページのパスは投稿によって異なるため、パス内に変数（投稿のid）を埋め込む必要があります。
+					                 	パス内に変数を埋め込むにはどうするかというと、Thymeleafでは__${変数}__のように前後をアンダースコア2つで囲みます。
+				                 		つまり以下のように記述すれば、パス内に投稿のidを埋め込むことができます。
+	                                    -->
+	                                    <a th:href="@{/posts/__${post.id}__}" class="btn btn-outline-primary d-block me-1">詳細</a>
+	                                    <a th:href="@{/posts/__${post.id}__/edit}" class="btn btn-outline-primary d-block me-1">編集</a>
+	                
+	                                    <!-- onsubmit属性で確認ダイアログを表示させる
+	                                     form要素にonsubmit属性を設定し、JavaScriptのconfirm()メソッドを使って確認ダイアログを表示させています。
+	                                     onsubmit属性 ＝ フォーム送信時のイベント処理を設定するための属性
+	                                    このように確認ダイアログを表示させることで、誤って削除ボタンを押してしまうといった意図せぬ操作を防げるため、ユーザビリティの向上につながります。
+	                                    特にデータの削除のような後戻りできない操作の場合は必須級です。
+	                                    -->
+										<form th:action="@{/posts/__${post.id}__/delete}" method="post" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+	                                        <button type="submit" class="btn btn-outline-danger">削除</button>
+	                                    </form>
+	                                </div>
+	                            </div>
+	                        </div>                        
+	                    </article>
+	                </div>
+					<!-- th:if属性を設定したHTML要素は指定された条件を満たすときのみ表示される -->
+	                <div th:if="${#lists.isEmpty(posts)}">
+	                    <p>投稿はありません。</p>
+	                </div>
+	            </div>
+	        </main>
+
+        	<div th:replace="~{fragment :: footer}"></div>
+        </div>
+
+        <div th:replace="~{fragment :: scripts}"></div>
+   </body>
+</html>

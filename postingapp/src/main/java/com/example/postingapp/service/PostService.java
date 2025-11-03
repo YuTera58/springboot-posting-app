@@ -26,6 +26,11 @@ public class PostService {
         return postRepository.findByUserOrderByCreatedAtDesc(user);
     }
     
+    // 課題用に追加：引数に指定したユーザーに紐づく投稿を更新日時が古い順に取得する
+    public List<Post> findPostsByUserOrderedByUpdatedAtAsc(User user) {
+        return postRepository.findByUserOrderByUpdatedAtAsc(user);
+    }
+    
     // 指定したidを持つ投稿を取得する
     public Optional<Post> findPostById(Integer id) {
         return postRepository.findById(id);

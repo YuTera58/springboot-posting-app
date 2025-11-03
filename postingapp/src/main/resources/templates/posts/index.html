@@ -44,7 +44,9 @@
 	                            <div class="card-body">                        
 	                                <h2 class="card-title fs-5" th:text="${post.title}"></h2>
 	                                <p class="card-text" th:text="${post.content}"></p>
-	            
+	                                <!-- 課題用追加項目 -->
+	            					<p class="card-text" th:text="${post.updatedAt}"></p>
+	            					
 	                                <div class="d-flex">
 									    <!-- th属性のパス内に変数を埋め込む
 						                 投稿詳細ページのパスは投稿によって異なるため、パス内に変数（投稿のid）を埋め込む必要があります。
