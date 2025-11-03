@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        <div th:replace="~{fragment :: meta}"></div>
+        <div th:replace="~{fragment :: styles}"></div>
+    	<title>投稿詳細</title>
+   </head>
+   <body>
+	   <div class="wrapper">
+       <header>
+           <nav class="navbar navbar-expand-md navbar-light bg-light">
+                <div class="container">
+                    <a th:href="@{/}" class="navbar-brand">投稿アプリ</a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+    
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a th:href="@{/logout}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    ログアウト
+                                </a>
+                                <form id="logout-form" th:action="@{/logout}" method="post"></form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="container">
+                <h1 class="fs-2 my-3">投稿詳細</h1>
+    
+                <div th:if="${successMessage}">
+                    <p class="text-success" th:text="${successMessage}"></p>
+                </div>
+    
+                <div class="mb-2">    
+                    <a th:href="@{/posts}" class="text-decoration-none">&lt; 戻る</a>
+                </div>
+    
+                <article>
+                    <div class="card mb-3">
+                        <div class="card-body">                    
+                            <h2 class="card-title fs-5" th:text="${post.title}"></h2>
+                            <p class="card-text" th:text="${post.content}"></p>
+            
+                            <!-- 自身の投稿詳細ページでのみリンクを表示させる
+		                	 本アプリでは他人の投稿詳細ページにもアクセスできるので、その場合には投稿編集ページのリンクが表示されないようにしたいです。
+				             そこで以下のようにth:if属性を使い、ログイン中のユーザーのidと、投稿を作成したユーザーのidが等しい場合にのみリンクを表示させています。
+				             ユーティリティオブジェクトの#authenticationを使うことで、Thymeleafテンプレート内からログイン中のユーザー情報にアクセスできます。
+			                -->
+			                <!-- #authentication 補足
+			                 #authentication.principalと記述することで、自動的にゲッター（getPrincipal()メソッド）を使って、UserDetailsImplクラスのインスタンスを取得してくれます。
+			                 また、#authentication.principal.userと記述すれば、自動的にゲッター（getUser()メソッド）を使って、Userインスタンス（エンティティであるUserクラスのインスタンス）を取得してくれます。
+			                 さらに、#authentication.principal.user.idと記述すれば、自動的にゲッター（getId()メソッド）を使って、Userインスタンスのidフィールドの値を取得してくれます。
+			                -->
+							<div th:if="${#authentication.principal.user.id == post.user.id}" class="d-flex">
+                                <a th:href="@{/posts/__${post.id}__/edit}" class="btn btn-outline-primary d-block me-1">編集</a>
+            
+                                <!-- 自身の投稿詳細ページでのみ削除ボタンを表示させたいので、th:if属性を設定したdiv要素の中に入れています。-->
+								<form th:action="@{/posts/__${post.id}__/delete}" method="post" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+                                    <button type="submit" class="btn btn-outline-danger">削除</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>                    
+                </article>
+            </div>
+        </main>
+
+        <footer class="d-flex justify-content-center align-items-center bg-light">
+            <p class="text-muted small mb-0">&copy; 投稿アプリ All rights reserved.</p>
+        </footer>
+       </div>
+       <!-- Bootstrap -->
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+        
+   </body>
+</html>
