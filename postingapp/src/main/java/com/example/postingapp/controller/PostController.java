@@ -41,8 +41,12 @@ public class PostController {
     @GetMapping
     public String index(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, Model model) {
         User user = userDetailsImpl.getUser();
-        List<Post> posts = postService.findPostsByUserOrderedByCreatedAtDesc(user);
-
+        //特定のユーザーに紐づく投稿の一覧を作成日時が新しい順で取得する
+        //List<Post> posts = postService.findPostsByUserOrderedByCreatedAtDesc(user);
+        
+        // 課題用に追加：引数に指定したユーザーに紐づく投稿を更新日時が古い順に取得する
+        List<Post> posts = postService.findPostsByUserOrderedByUpdatedAtAsc(user);
+        
         model.addAttribute("posts", posts);
 
         return "posts/index";

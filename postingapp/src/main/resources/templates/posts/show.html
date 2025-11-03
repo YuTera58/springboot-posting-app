@@ -26,7 +26,9 @@
 	                        <div class="card-body">                    
 	                            <h2 class="card-title fs-5" th:text="${post.title}"></h2>
 	                            <p class="card-text" th:text="${post.content}"></p>
-	            
+	            				<!-- 課題用追加項目 -->
+	            				<p class="card-text" th:text="${post.updatedAt}"></p>
+	            				
 	                            <!-- 自身の投稿詳細ページでのみリンクを表示させる
 			                	 本アプリでは他人の投稿詳細ページにもアクセスできるので、その場合には投稿編集ページのリンクが表示されないようにしたいです。
 					             そこで以下のようにth:if属性を使い、ログイン中のユーザーのidと、投稿を作成したユーザーのidが等しい場合にのみリンクを表示させています。

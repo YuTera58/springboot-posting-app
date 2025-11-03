@@ -1,0 +1,20 @@
+spring.application.name=postingapp
+
+spring.datasource.url=jdbc:mysql://${MYSQL_HOST:localhost}:3306/springboot_posting_app
+spring.datasource.username=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.sql.init.encoding=utf-8
+spring.sql.init.mode=always
+
+spring.mail.host=sandbox.smtp.mailtrap.io
+spring.mail.port=2525
+spring.mail.username=1e0b90401e6a7c
+spring.mail.password=fd7d205b62404b
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# Spring Data JPAでRepositoryインターフェースに定義するメソッド名称により自動生成された SQL をコンソールにログ出力
+#logging.level.org.hibernate.SQL=debug
+# バインドパラメータ出力
+#logging.level.org.hibernate.type.descriptor.sql.BasicBinder=trace
+#logging.level.org.hibernate.type.EnumType=trace
