@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       
+       <!-- Bootstrap -->
+       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+       
+       <!-- Google Fonts -->
+       <link rel="preconnect" href="https://fonts.googleapis.com">
+       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet"> 
+       
+       <!-- CSSファイル -->
+       <link th:href="@{/css/style.css}" rel="stylesheet" >  
+       
+       <title>投稿一覧</title>
+   </head>
+   <body>
+       <header>
+           <nav class="navbar navbar-expand-md navbar-light bg-light">
+                <div class="container">
+                    <a th:href="@{/}" class="navbar-brand">投稿アプリ</a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+    
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a th:href="@{/logout}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    ログアウト
+                                </a>
+                                <form id="logout-form" th:action="@{/logout}" method="post"></form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div class="container">
+                <h1 class="fs-2 my-3">投稿一覧</h1>
+    
+                <div th:if="${param.loggedIn}">
+                    <p class="text-success">ログインしました。</p>
+                </div>
+				
+				<!-- フラッシュメッセージ -->
+                <div th:if="${successMessage}">
+                    <p class="text-success" th:text="${successMessage}"></p>
+                </div>
+    
+	            <!-- フラッシュメッセージ -->
+                <div th:if="${errorMessage}">
+                    <p class="text-danger" th:text="${errorMessage}"></p>
+                </div>
+    
+                <div class="mb-2">
+                    <a th:href="@{/posts/register}" class="text-decoration-none">投稿作成</a>
+                </div>
+    
+                <!-- #listsはリスト型のデータを扱うためのユーティリティオブジェクトで、
+                isEmpty()メソッドにList型のデータを指定することでその中身が空かどうかをチェックすることができます。
+                空であればtrue、空でなければfalseを返します。-->
+                <!-- th:unless属性を設定したHTML要素は指定された条件を満たさないときのみ表示される -->
+				<div th:unless="${#lists.isEmpty(posts)}">
+				    <!-- Thymeleafのth:each属性は、繰り返し処理を行うための機能です。
+			        th:each属性の値にListなどのコレクションや配列を指定することで、
+			        その要素の数だけ繰り返し処理を行い、HTML要素を出力することができます。-->
+                    <article th:each="post : ${posts}">
+                        <div class="card mb-3">
+                            <div class="card-body">                        
+                                <h2 class="card-title fs-5" th:text="${post.title}"></h2>
+                                <p class="card-text" th:text="${post.content}"></p>
+            
+                                <div class="d-flex">
+								    <!-- th属性のパス内に変数を埋め込む
+					                 投稿詳細ページのパスは投稿によって異なるため、パス内に変数（投稿のid）を埋め込む必要があります。
+				                 	パス内に変数を埋め込むにはどうするかというと、Thymeleafでは__${変数}__のように前後をアンダースコア2つで囲みます。
+			                 		つまり以下のように記述すれば、パス内に投稿のidを埋め込むことができます。
+                                    -->
+                                    <a th:href="@{/posts/__${post.id}__}" class="btn btn-outline-primary d-block me-1">詳細</a>
+                                    <a th:href="@{/posts/__${post.id}__/edit}" class="btn btn-outline-primary d-block me-1">編集</a>
+                
+                                    <!-- onsubmit属性で確認ダイアログを表示させる
+                                     form要素にonsubmit属性を設定し、JavaScriptのconfirm()メソッドを使って確認ダイアログを表示させています。
+                                     onsubmit属性 ＝ フォーム送信時のイベント処理を設定するための属性
+                                    このように確認ダイアログを表示させることで、誤って削除ボタンを押してしまうといった意図せぬ操作を防げるため、ユーザビリティの向上につながります。
+                                    特にデータの削除のような後戻りできない操作の場合は必須級です。
+                                    -->
+									<form th:action="@{/posts/__${post.id}__/delete}" method="post" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+                                        <button type="submit" class="btn btn-outline-danger">削除</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>                        
+                    </article>
+                </div>
+				<!-- th:if属性を設定したHTML要素は指定された条件を満たすときのみ表示される -->
+                <div th:if="${#lists.isEmpty(posts)}">
+                    <p>投稿はありません。</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="d-flex justify-content-center align-items-center bg-light">
+            <p class="text-muted small mb-0">&copy; 投稿アプリ All rights reserved.</p>
+        </footer>
+       
+       <!-- Bootstrap -->
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+        
+   </body>
+</html>
